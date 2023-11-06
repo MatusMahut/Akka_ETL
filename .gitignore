@@ -11,4 +11,10 @@ target/
 .bloop
 .bsp
 
+#testing files
 *.csv
+
+#configs
+!/src/main/storages/CSV/
+/src/main/storages/CSV/*
+!/src/main/storages/CSV/csv_example.conf
