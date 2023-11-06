@@ -8,26 +8,26 @@ import scala.io.Source
 import scala.reflect.ClassTag
 import java.io.FileWriter
 import java.io.File
+import eu.`2msoftware`.glue.Glue._
 
 object Extraction {
 
-  trait Action
-  case class FetchPackage()                    extends Action
-  case class Fetched(data: Array[Byte])        extends Action
-  case class FetchingFinished()                extends Action
-  case class ConsumePackage(data: Array[Byte]) extends Action
-  case class Commit()                          extends Action
-  case class Close()                           extends Action
-  case class Open()                            extends Action
-  case class Terminate()                       extends Action
-  case class Start()                           extends Action
+  trait ExtAction
+  case class FetchPackage()                    extends ExtAction
+  case class Fetched(data: Array[Byte])        extends ExtAction
+  case class FetchingFinished()                extends ExtAction
+  case class ConsumePackage(data: Array[Byte]) extends ExtAction
+  case class Commit()                          extends ExtAction
+  case class Close()                           extends ExtAction
+  case class Open()                            extends ExtAction
+  case class Terminate()                       extends ExtAction
+  case class Start()                           extends ExtAction
 
   // val tempFilePrefix = "TMP_"
 
-  def Extraction(): Behavior[Action] = Behaviors.setup { context =>
+  def Extraction(source: StorageObject, target: StorageObject, package_size: Int): Behavior[ExtAction] = Behaviors.setup { context =>
     val imutableConsumerCSV = context.spawn(ImutableConsumerCSV("target.csv"), "imutableConsumerCSV")
-    val imutableFetcherCSV =
-      context.spawn(ImutableFetcherCSV(filename = "source.csv", 0, 1000, context.self), "imutableFetcherCSV")
+    val imutableFetcherCSV  = context.spawn(ImutableFetcherCSV(filename = source.objectName, 0, package_size, context.self), "imutableFetcherCSV")
 
     Behaviors.receiveMessage { message =>
       message match {
@@ -52,7 +52,12 @@ object Extraction {
     }
   }
 
-  def ImutableFetcherCSV(filename: String, line: Int = 0, package_size: Int = 10, extraction: ActorRef[Action]): Behavior[Action] =
+  def ImutableFetcherCSV(
+      filename: String,
+      line: Int = 0,
+      package_size: Int = 10,
+      extraction: ActorRef[ExtAction]
+  ): Behavior[ExtAction] =
     Behaviors.receive { (context, message) =>
       message match {
         // val ExtractionSystem = ActorSystem(ImutableFetcherCSV("filename.csv",0,10,ImutableConsumerCSV("filename.csv")), "emotionActorSystem")
@@ -86,7 +91,7 @@ object Extraction {
     else
       addLineToByteArray(Array.concat(data, lines(line).getBytes(), "\n".getBytes()), lines, line + 1)
 
-  def ImutableConsumerCSV(filename: String, filewriter: FileWriter = null): Behaviors.Receive[Action] = Behaviors.receive {
+  def ImutableConsumerCSV(filename: String, filewriter: FileWriter = null): Behaviors.Receive[ExtAction] = Behaviors.receive {
     (context, message) =>
       message match {
         case Open() =>
