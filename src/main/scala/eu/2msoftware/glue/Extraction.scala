@@ -8,7 +8,10 @@ import scala.io.Source
 import scala.reflect.ClassTag
 import java.io.FileWriter
 import java.io.File
-import eu.`2msoftware`.glue.Glue._
+import eu.`2msoftware`.glue.Glue
+import eu.`2msoftware`.glue.Consumer
+import eu.`2msoftware`.glue.Glue.StorageObject
+import eu.`2msoftware`.glue.Fetcher
 
 object Extraction {
 
@@ -26,8 +29,8 @@ object Extraction {
   // val tempFilePrefix = "TMP_"
 
   def Extraction(source: StorageObject, target: StorageObject, package_size: Int): Behavior[ExtAction] = Behaviors.setup { context =>
-    val imutableConsumerCSV = context.spawn(ImutableConsumerCSV("target.csv"), "imutableConsumerCSV")
-    val imutableFetcherCSV  = context.spawn(ImutableFetcherCSV(filename = source.objectName, 0, package_size, context.self), "imutableFetcherCSV")
+    val imutableConsumerCSV = context.spawn(Consumer().get_behavior(target), "Consumer")
+    val imutableFetcherCSV  = context.spawn(Fetcher().get_behavior(source, package_size, context.self), "Fetcher")
 
     Behaviors.receiveMessage { message =>
       message match {
@@ -50,66 +53,5 @@ object Extraction {
       }
 
     }
-  }
-
-  def ImutableFetcherCSV(
-      filename: String,
-      line: Int = 0,
-      package_size: Int = 10,
-      extraction: ActorRef[ExtAction]
-  ): Behavior[ExtAction] =
-    Behaviors.receive { (context, message) =>
-      message match {
-        // val ExtractionSystem = ActorSystem(ImutableFetcherCSV("filename.csv",0,10,ImutableConsumerCSV("filename.csv")), "emotionActorSystem")
-        case FetchPackage() =>
-          val data = readCSVLines(filename, line, line + package_size)
-          if (data.isEmpty) {
-            context.log.info(s"FETCHER -> Fetching Finished")
-            extraction ! FetchingFinished()
-            Behaviors.stopped
-          } else {
-            context.log.info(s"FETCHER -> Taken $package_size lines from line $line")
-            extraction ! Fetched(data)
-            ImutableFetcherCSV(filename, line + package_size, package_size, extraction) // new behaviour
-          }
-
-        case Close() =>
-          context.log.info(s"Fetcher closed")
-          Behaviors.stopped
-      }
-
-    }
-
-  def readCSVLines(fileName: String, fromLine: Int, toLine: Int): Array[Byte] = {
-    val lineIT = Source.fromFile(fileName).getLines()
-    val lines  = lineIT.toArray(ClassTag[String](classOf[String])).slice(fromLine, toLine)
-    addLineToByteArray(Array.emptyByteArray, lines, 0)
-  }
-
-  def addLineToByteArray(data: Array[Byte], lines: Array[String], line: Int): Array[Byte] =
-    if (line == lines.length) data
-    else
-      addLineToByteArray(Array.concat(data, lines(line).getBytes(), "\n".getBytes()), lines, line + 1)
-
-  def ImutableConsumerCSV(filename: String, filewriter: FileWriter = null): Behaviors.Receive[ExtAction] = Behaviors.receive {
-    (context, message) =>
-      message match {
-        case Open() =>
-          ImutableConsumerCSV(filename, new FileWriter(new File(filename), true))
-        case ConsumePackage(data) =>
-          try
-            filewriter.write(new String(data))
-          catch {
-            case e: Exception =>
-              filewriter.close()
-          }
-          context.log.info(s"CONSUMER -> Appended package to file $filename .")
-          Behaviors.same
-        case Commit() =>
-          filewriter.close()
-          context.log.info(s"CONSUMER -> COMMITED.")
-          Behaviors.same
-      }
-
   }
 }

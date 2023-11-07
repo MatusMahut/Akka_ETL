@@ -20,3 +20,5 @@ libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-actor-testkit-typed" % akkaVersion % Test,
   "org.scalatest" %% "scalatest" % "3.2.12" % Test
 )
+
+libraryDependencies += "net.snowflake" % "snowflake-jdbc" % "3.14.2"
