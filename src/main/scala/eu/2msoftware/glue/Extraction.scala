@@ -1,4 +1,4 @@
-package com.`2m_software`
+package eu.`2msoftware`.glue
 import akka.actor.typed.Behavior
 import akka.actor.typed.scaladsl.Behaviors
 import akka.actor.typed.ActorSystem
@@ -9,9 +9,9 @@ import scala.reflect.ClassTag
 import java.io.FileWriter
 import java.io.File
 import eu.`2msoftware`.glue.Glue
-import eu.`2msoftware`.glue.Consumer
+import eu.`2msoftware`.glue.ConsumerFactory
 import eu.`2msoftware`.glue.Glue.StorageObject
-import eu.`2msoftware`.glue.Fetcher
+import eu.`2msoftware`.glue.FetcherFactory
 
 object Extraction {
 
@@ -29,8 +29,8 @@ object Extraction {
   // val tempFilePrefix = "TMP_"
 
   def Extraction(source: StorageObject, target: StorageObject, package_size: Int): Behavior[ExtAction] = Behaviors.setup { context =>
-    val imutableConsumerCSV = context.spawn(Consumer().get_behavior(target), "Consumer")
-    val imutableFetcherCSV  = context.spawn(Fetcher().get_behavior(source, package_size, context.self), "Fetcher")
+    val imutableConsumerCSV = context.spawn(ConsumerFactory().get_behavior(target), "Consumer")
+    val imutableFetcherCSV  = context.spawn(FetcherFactory().get_behavior(source, package_size, context.self), "Fetcher")
 
     Behaviors.receiveMessage { message =>
       message match {

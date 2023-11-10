@@ -1,20 +1,16 @@
 package eu.`2msoftware`.glue
 
 import akka.actor.typed.ActorSystem
-import com.`2m_software`.Extraction._
+import eu.`2msoftware`.glue.storages.csv.CSV_Storage
+import eu.`2msoftware`.glue.Extraction._
 import akka.actor.typed.Behavior
 import akka.actor.typed.scaladsl.Behaviors
 import java.math.BigInteger
-import akka.japi.pf.FI.Apply
 
 object Glue extends App {
 
   trait GlueAction
   case class StartExtraction(source: StorageObject, target: StorageObject, package_size: Int) extends GlueAction
-
-  trait Storage
-  case class CSV_Storage(config: String) extends Storage{
-  }
   case class StorageObject(objectName: String, storage: Storage)
 
   def Glue(extractionID: Long = 0): Behavior[GlueAction] = Behaviors.setup { context =>
@@ -35,15 +31,15 @@ object Glue extends App {
   val ExtractionSystem = ActorSystem(Glue(), "GLUE")
   //extraction 1
   ExtractionSystem ! StartExtraction(
-    source = StorageObject("source1.csv", CSV_Storage("csv_storage1")),
-    target = StorageObject("target1.csv", CSV_Storage("csv_storage2")),
+    source = StorageObject("source1.csv", new CSV_Storage("csv1")),
+    target = StorageObject("target1.csv", new CSV_Storage("csv2")),
     package_size = 500
   )
 
   //extraction 2
   ExtractionSystem ! StartExtraction(
-    source = StorageObject("source2.csv", CSV_Storage("csv_storage1")),
-    target = StorageObject("target2.csv", CSV_Storage("csv_storage2")),
+    source = StorageObject("source2.csv", new CSV_Storage("csv1")),
+    target = StorageObject("target2.csv", new CSV_Storage("csv1")),
     package_size = 500
   )
 

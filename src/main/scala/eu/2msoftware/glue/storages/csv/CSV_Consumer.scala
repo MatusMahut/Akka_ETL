@@ -1,8 +1,8 @@
-package eu.`2msoftware`.glue.storages.CSV
+package eu.`2msoftware`.glue.storages.csv
 
 import java.io.FileWriter
 import akka.actor.typed.scaladsl.Behaviors
-import com.`2m_software`.Extraction._
+import eu.`2msoftware`.glue.Extraction._
 import java.io.File
 import eu.`2msoftware`.glue.Glue._
 

@@ -1,9 +1,8 @@
-package eu.`2msoftware`.glue.storages.CSV
-import eu.`2msoftware`.glue.Fetcher
+package eu.`2msoftware`.glue.storages.csv
+import eu.`2msoftware`.glue.FetcherFactory
 import akka.actor.typed.{ ActorRef, Behavior }
-import com.`2m_software`.Extraction
+import eu.`2msoftware`.glue.Extraction._
 import akka.actor.typed.Behavior
-import com.`2m_software`.Extraction._
 import akka.actor.typed.scaladsl.Behaviors
 import scala.io.Source
 import scala.reflect.ClassTag
@@ -33,7 +32,8 @@ object FetcherCSV {
       pack_size: Int,
       extraction: ActorRef[ExtAction]
   ): Behavior[ExtAction] = {
-    val data = readCSVLines(storObj.objectName, line, line + pack_size)
+    val full_path = storObj.storage.asInstanceOf[CSV_Storage].path + storObj.objectName
+    val data      = readCSVLines(full_path, line, line + pack_size)
     if (data.isEmpty) {
       context.log.info(s"FETCHER -> Fetching Finished")
       extraction ! FetchingFinished()

@@ -14,7 +14,11 @@ target/
 #testing files
 *.csv
 
-#configs
+#config CSV
 !/src/main/storages/CSV/
 /src/main/storages/CSV/*
 !/src/main/storages/CSV/csv_example.conf
+#config Snowflake
+!/src/main/storages/snowflake/
+/src/main/storages/snowflake/*
+!/src/main/storages/snowflake/snowflake_example.conf
